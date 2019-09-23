@@ -1,58 +1,108 @@
-# Salesforce App
+Queueables are small jobs you can trigger asynchronously in your org. They are useful in many uses cases. For more information, read the part one of this article. 
 
-This guide helps Salesforce developers who are new to Visual Studio Code go from zero to a deployed app using Salesforce Extensions for VS Code and Salesforce CLI.
+This example will demonstrate how to create a small Queueable that will make a callout to an external service after the insertion of new contacts.
 
-## Part 1: Choosing a Development Model
+# 1. Setup
+For this example, I created a brand new SFDX project. For more information about how to create and use SFDX, please visit this article I wrote about it. 
 
-There are two types of developer processes or models supported in Salesforce Extensions for VS Code and Salesforce CLI. These models are explained below. Each model offers pros and cons and is fully supported.
+# 2. The code
+Let's create our first Queueable. 
 
-### Package Development Model
+## Step 1: Create the apex class
 
-The package development model allows you to create self-contained applications or libraries that are deployed to your org as a single package. These packages are typically developed against source-tracked orgs called scratch orgs. This development model is geared toward a more modern type of software development process that uses org source tracking, source control, and continuous integration and deployment.
+Start by running this command in the terminal:
+  
+    sfdx force:apex:class:create -n 'Qable_ApiCall' -d 'force-app/main/default/classes'
 
-If you are starting a new project, we recommend that you consider the package development model. To start developing with this model in Visual Studio Code, see [Package Development Model with VS Code](https://forcedotcom.github.io/salesforcedx-vscode/articles/user-guide/package-development-model). For details about the model, see the [Package Development Model](https://trailhead.salesforce.com/en/content/learn/modules/sfdx_dev_model) Trailhead module.
+That command will create a new Apex Class called 'Qable_ApiCall' and place it in the classes folder. As a personal standard, I always prefix my Queueable class with "Qable_", making it very easy to find them.
 
-If you are developing against scratch orgs, use the command `SFDX: Create Project` (VS Code) or `sfdx force:project:create` (Salesforce CLI)  to create your project. If you used another command, you might want to start over with that command.
+The new class should be pretty much empty and look like this:
 
-When working with source-tracked orgs, use the commands `SFDX: Push Source to Org` (VS Code) or `sfdx force:source:push` (Salesforce CLI) and `SFDX: Pull Source from Org` (VS Code) or `sfdx force:source:pull` (Salesforce CLI). Do not use the `Retrieve` and `Deploy` commands with scratch orgs.
-
-### Org Development Model
-
-The org development model allows you to connect directly to a non-source-tracked org (sandbox, Developer Edition (DE) org, Trailhead Playground, or even a production org) to retrieve and deploy code directly. This model is similar to the type of development you have done in the past using tools such as Force.com IDE or MavensMate.
-
-To start developing with this model in Visual Studio Code, see [Org Development Model with VS Code](https://forcedotcom.github.io/salesforcedx-vscode/articles/user-guide/org-development-model). For details about the model, see the [Org Development Model](https://trailhead.salesforce.com/content/learn/modules/org-development-model) Trailhead module.
-
-If you are developing against non-source-tracked orgs, use the command `SFDX: Create Project with Manifest` (VS Code) or `sfdx force:project:create --manifest` (Salesforce CLI) to create your project. If you used another command, you might want to start over with this command to create a Salesforce DX project.
-
-When working with non-source-tracked orgs, use the commands `SFDX: Deploy Source to Org` (VS Code) or `sfdx force:source:deploy` (Salesforce CLI) and `SFDX: Retrieve Source from Org` (VS Code) or `sfdx force:source:retrieve` (Salesforce CLI). The `Push` and `Pull` commands work only on orgs with source tracking (scratch orgs).
-
-## The `sfdx-project.json` File
-
-The `sfdx-project.json` file contains useful configuration information for your project. See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm) in the _Salesforce DX Developer Guide_ for details about this file.
-
-The most important parts of this file for getting started are the `sfdcLoginUrl` and `packageDirectories` properties.
-
-The `sfdcLoginUrl` specifies the default login URL to use when authorizing an org.
-
-The `packageDirectories` filepath tells VS Code and Salesforce CLI where the metadata files for your project are stored. You need at least one package directory set in your file. The default setting is shown below. If you set the value of the `packageDirectories` property called `path` to `force-app`, by default your metadata goes in the `force-app` directory. If you want to change that directory to something like `src`, simply change the `path` value and make sure the directory you’re pointing to exists.
-
-```json
-"packageDirectories" : [
+    public with sharing class Qable_ApiCall 
     {
-      "path": "force-app",
-      "default": true
+        public Qable_ApiCall () 
+        {
+        }
     }
-]
-```
 
-## Part 2: Working with Source
+## Step 2: Bare bone Queueable implementation
 
-For details about developing against scratch orgs, see the [Package Development Model](https://trailhead.salesforce.com/en/content/learn/modules/sfdx_dev_model) module on Trailhead or [Package Development Model with VS Code](https://forcedotcom.github.io/salesforcedx-vscode/articles/user-guide/package-development-model).
+To implement the interface, update the class definition to make it look like this:
 
-For details about developing against orgs that don’t have source tracking, see the [Org Development Model](https://trailhead.salesforce.com/content/learn/modules/org-development-model) module on Trailhead or [Org Development Model with VS Code](https://forcedotcom.github.io/salesforcedx-vscode/articles/user-guide/org-development-model).
+    public with sharing class Qable_ApiCall implements Queueable
+    {
+        public Qable_ApiCall()
+        {
+        }
 
-## Part 3: Deploying to Production
+        public void execute(QueueableContext context)
+        {
 
-Don’t deploy your code to production directly from Visual Studio Code. The deploy and retrieve commands do not support transactional operations, which means that a deployment can fail in a partial state. Also, the deploy and retrieve commands don’t run the tests needed for production deployments. The push and pull commands are disabled for orgs that don’t have source tracking, including production orgs.
+        }
+    }
 
-Deploy your changes to production using [packaging](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_dev2gp.htm) or by [converting your source](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference_force_source.htm#cli_reference_convert) into metadata format and using the [metadata deploy command](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference_force_mdapi.htm#cli_reference_deploy).
+The implements keyword in the class definition tells Salesforce that this class is in fact a Queueable. 
+
+The execute method is required by the Queueable interface and is the method that will be called by the system when the Queueable execution starts.
+
+## Step 3: Add some logic
+
+The last step to make our Queueable class is by adding some logic in it. Our goal is to make a callout with the newly created contacts. 
+
+To receive those contacts, we will add a new member in the Queueable class and assign that member from a parameter in the constructor.
+
+    private List<Contact> createdContacts;
+
+    public Qable_ApiCall(List<Contact> createdContacts)
+    {
+        this.createdContacts = createdContacts;
+    }
+
+And then update the execute method to make the callout using the data we received in the constructor.
+
+    public void execute(QueueableContext context)
+    {
+        String payload = Json.serialize(createdContacts);
+
+        Http client = new Http();
+        HttpRequest request = new HttpRequest();
+
+        request.setEndpoint('callout:ExternalService/');
+        request.setBody(payload);
+        request.setMethod('Post');
+        client.send(request);
+    }
+
+## Step 4: Create the trigger
+
+Create the trigger class by running the following command in your terminal: 
+
+    sfdx force:apex:trigger:create -n 'Trigger_Contact' -d 'force-app/main/default/triggers'
+
+That command will create a new Apex Trigger called 'ContactTrigger' and place it in the trigger folder. As a personal standard, I always prefix my Triggers with "Trigger_", making it very easy to find them.
+
+The new class should be pretty much empty and look like this:
+
+    trigger Trigger_Contact on SOBJECT (before insert)
+    {
+    }
+
+The created trigger needs to be configured to our needs. Let's make it so he fires after the insertion of new contacts
+
+    trigger Trigger_Contact on Contact (after insert) 
+    {
+    }
+
+## Step 5: Hook things up
+
+The last step is to finally hook everything up. 
+
+Update the trigger so he creates a new Qable_ApiCall with the new Contacts and then schedule the execution of the Queueable.
+
+    trigger Trigger_Contact on Contact (after insert)
+    {
+        List<Contact> contacts = ( List<Contact>)Trigger.New;
+        Qable_ApiCall qable = new Qable_ApiCall(contacts);
+
+        System.enqueueJob(qable);
+    }
