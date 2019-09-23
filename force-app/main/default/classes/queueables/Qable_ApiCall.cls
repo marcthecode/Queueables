@@ -30,7 +30,7 @@ public with sharing class Qable_ApiCall implements Queueable
 
         // Set the endpoint with a named credential.
         // See documentation for more information: https://help.salesforce.com/articleView?id=named_credentials_about.htm
-        request.setEndpoint('callout:SG_Services/');
+        request.setEndpoint('callout:ExternalService/');
         request.setBody(payload);
         request.setMethod('Post');
 
